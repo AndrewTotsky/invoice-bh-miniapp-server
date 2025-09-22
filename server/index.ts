@@ -154,7 +154,8 @@ async function processTelegramResponse(response: globalThis.Response): Promise<a
 }
 
 app.post('/api/send-telegram', upload.single('file'), async (req: Request<{}, TelegramResponse | TelegramError, TelegramRequest>, res: Response<TelegramResponse | TelegramError>) => {
-    const { message, channelId, fields } = req.body;
+  console.log('Sending Telegram message:', req.body);
+  const { message, channelId, fields } = req.body;
     const file = req.file;
 
     // Валидация входных параметров
