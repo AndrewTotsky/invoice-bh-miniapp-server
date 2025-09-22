@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import PaymentForm from "./InvoiceForm";
+import PaymentForm, { User } from "./InvoiceForm";
 
 function App(): React.JSX.Element {
 

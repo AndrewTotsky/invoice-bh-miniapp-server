@@ -34,7 +34,7 @@ interface FormValues {
     documentLink: string;
 }
 
-interface User {
+export interface User {
     id: number;
     first_name: string;
     last_name: string;
@@ -47,7 +47,7 @@ const convertDate = (strDate: string | null): string => {
     return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
 }
 
-export default function PaymentForm({ user }: { user: User }): React.JSX.Element {
+export default function PaymentForm({ user }: { user: User | null }): React.JSX.Element {
     const form = useForm<FormValues>({
         initialValues: {
             rubles: "50000",
