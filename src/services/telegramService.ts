@@ -12,7 +12,7 @@ interface SendMessageParams {
 }
 
 export class TelegramService {
-  private static readonly API_URL = 'http://localhost:3001/api/send-telegram';
+  private static readonly API_URL = 'http://45.82.153.105:3001/api/send-telegram';
 
   static async sendMessage({ message, channelId, file, fields }: SendMessageParams): Promise<TelegramResponse> {
     try {

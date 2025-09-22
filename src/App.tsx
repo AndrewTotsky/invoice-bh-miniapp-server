@@ -6,6 +6,7 @@ function App(): React.JSX.Element {
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
+        console.log("App mounted");
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
