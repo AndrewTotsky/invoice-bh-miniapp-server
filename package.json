@@ -1,9 +1,9 @@
 {
-    "name": "invoice-bh-miniapp",
+    "name": "invoice-bh-miniapp-server",
     "private": true,
     "version": "0.0.0",
     "type": "module",
-    "homepage": "https://AndrewTotsky.github.io/invoice-bh-miniapp",
+    "homepage": "https://AndrewTotsky.github.io/invoice-bh-miniapp-server",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
