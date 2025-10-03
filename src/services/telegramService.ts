@@ -12,14 +12,14 @@ interface SendMessageParams {
 }
 
 export class TelegramService {
-  private static readonly API_URL = '/api/send-telegram';
+  private static readonly API_URL = 'http://localhost:3001/api/send-telegram';
 
   static async sendMessage({ message, channelId, file, fields }: SendMessageParams): Promise<TelegramResponse> {
     try {
       const formData = new FormData();
       formData.append('message', message);
       formData.append('channelId', channelId);
-      formData.append('fields', fields.join(','));
+      formData.append('fields', JSON.stringify(fields));
 
       if (file) {
         formData.append('file', file);

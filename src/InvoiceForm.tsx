@@ -41,9 +41,10 @@ export interface User {
     username: string;
 }
 
-const convertDate = (strDate: string | null): string => {
+const convertDate = (strDate: string | Date | null): string => {
+    if (!strDate) return "";
     const date = new Date(strDate);
-    if (!date) return "";
+    if (isNaN(date.getTime())) return "";
     return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
 }
 
@@ -139,9 +140,9 @@ export default function PaymentForm({ user }: { user: User | null }): React.JSX.
             selectedPlan === `Атмосфера` ? ` Пункт МП: ${mpPoint}` : "",
             selectedPlan === "Атмосфера" && housingComplex ? ` ЖК: ${housingComplex}` : "",
             ` Месяц МП: ${mediaPlanMonth}`,
-            values.attachedFile ? `\nДокумент основания: <a href="${documentLink}">${documentName}</a>` : "",
-            values.attachedFile ? `\nНомер документа основания: ${documentNumber}` : "",
-            values.attachedFile ? `\nСпособ подписания: ${signingMethod}` : "",
+            values.attachedFile ? `\n\nДокумент основания: <a href="${documentLink}">${documentName}</a>` : "",
+            values.attachedFile ? `\n\nНомер документа основания: ${documentNumber}` : "",
+            values.attachedFile ? `\n\nСпособ подписания: ${signingMethod}` : "",
             `\n\nОтправитель: ${user?.first_name} ${user?.last_name}`,
         ].join("");
         setResultText(resultInvoice);
@@ -227,20 +228,18 @@ export default function PaymentForm({ user }: { user: User | null }): React.JSX.
             const result = await TelegramService.sendMessage({
                 message: resultText,
                 fields: [
-                    form.values.rubles, 
-                    form.values.kopecks, 
-                    form.values.invoiceNumber, 
-                    form.values.invoiceDate ? convertDate(form.values.invoiceDate) : "", 
-                    form.values.period, 
-                    form.values.counterparty, 
-                    form.values.service, 
-                    form.values.planArticle, 
-                    form.values.housingComplex, 
-                    form.values.mediaPlanMonth,
-                    form.values.documentName,
-                    form.values.documentNumber,
-                    form.values.signingMethod,
-                    form.values.documentLink
+                    selectedPlan,                                    // МП (план)
+                    form.values.planArticle,                         // Статья МП
+                    form.values.mpPoint,                             // Пункт МП
+                    form.values.mediaPlanMonth,                      // Месяц
+                    form.values.housingComplex,                       // ЖК
+                    form.values.documentNumber,                       // номер документа основания
+                    form.values.documentLink,                         // ссылка на документ основания
+                    form.values.invoiceNumber,                        // номер счета
+                    form.values.invoiceDate ? convertDate(form.values.invoiceDate) : "", // дата счета
+                    `${form.values.rubles} руб. ${form.values.kopecks} коп.`, // сумма счета
+                    form.values.counterparty,                         // наименование подрядчика
+                    `${user?.first_name} ${user?.last_name}`          // Отправитель
                 ],
                 channelId: "-1002988617200",
                 file: form.values.attachedFile
@@ -504,6 +503,29 @@ export default function PaymentForm({ user }: { user: User | null }): React.JSX.
                     >
                         {isSending ? "Отправка..." : "В Telegram"}
                     </Button>
+                    
+                    {/* Сообщение о результате отправки под кнопкой */}
+                    {sendStatus && (
+                        <Box
+                            mt="sm"
+                            p="md"
+                            style={{
+                                backgroundColor: sendStatus.includes("✅")
+                                    ? "#d4edda"
+                                    : "#f8d7da",
+                                border: `1px solid ${
+                                    sendStatus.includes("✅") ? "#c3e6cb" : "#f5c6cb"
+                                }`,
+                                borderRadius: "8px",
+                                color: sendStatus.includes("✅")
+                                    ? "#155724"
+                                    : "#721c24",
+                                fontSize: "14px",
+                            }}
+                        >
+                            {sendStatus}
+                        </Box>
+                    )}
                 </Stack>
             </form>
 
@@ -527,27 +549,6 @@ export default function PaymentForm({ user }: { user: User | null }): React.JSX.
                 </Box>
             )}
 
-            {sendStatus && (
-                <Box
-                    mt="md"
-                    p="md"
-                    style={{
-                        backgroundColor: sendStatus.includes("✅")
-                            ? "#d4edda"
-                            : "#f8d7da",
-                        border: `1px solid ${
-                            sendStatus.includes("✅") ? "#c3e6cb" : "#f5c6cb"
-                        }`,
-                        borderRadius: "8px",
-                        color: sendStatus.includes("✅")
-                            ? "#155724"
-                            : "#721c24",
-                        fontSize: "14px",
-                    }}
-                >
-                    {sendStatus}
-                </Box>
-            )}
         </Box>
     );
 }

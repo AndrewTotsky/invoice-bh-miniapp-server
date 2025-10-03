@@ -24,13 +24,7 @@ const upload = multer({
 });
 
 // Middleware
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://AndrewTotsky.github.io'
-  ],
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 // app.use(express.static(path.join(__dirname, '../dist')));
 
@@ -39,7 +33,7 @@ interface TelegramRequest {
   message: string;
   channelId: string;
   file?: any;
-  fields: string[];
+  fields: string[] | string;
 }
 
 interface TelegramResponse {
@@ -155,8 +149,27 @@ async function processTelegramResponse(response: globalThis.Response): Promise<a
 
 app.post('/api/send-telegram', upload.single('file'), async (req: Request<{}, TelegramResponse | TelegramError, TelegramRequest>, res: Response<TelegramResponse | TelegramError>) => {
   console.log('Sending Telegram message:', req.body);
-  const { message, channelId, fields } = req.body;
-    const file = req.file;
+  const { message, channelId } = req.body;
+  const fieldsString = req.body.fields;
+  const file = req.file;
+  
+  // Парсим поля из JSON строки в массив
+  let fields: string[] = [];
+  if (fieldsString) {
+    try {
+      // Если fieldsString уже массив, используем его напрямую
+      if (Array.isArray(fieldsString)) {
+        fields = fieldsString.filter((item): item is string => typeof item === 'string');
+      } else {
+        // Если это строка, парсим JSON
+        const parsedFields = JSON.parse(fieldsString);
+        fields = Array.isArray(parsedFields) ? parsedFields.filter((item): item is string => typeof item === 'string') : [];
+      }
+    } catch (error) {
+      console.error('Ошибка парсинга полей:', error);
+      fields = [];
+    }
+  }
 
     // Валидация входных параметров
     const requestValidation = validateRequest(message, channelId);
@@ -185,7 +198,7 @@ app.post('/api/send-telegram', upload.single('file'), async (req: Request<{}, Te
 
         console.log('Fields:', fields);
 
-        // await writeToGoogleSheet(fields, 'A:C');
+        await writeToGoogleSheet(fields, 'A:N');
 
         return res.status(200).json({ 
             success: true, 

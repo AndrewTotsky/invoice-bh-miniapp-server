@@ -1,4 +1,3 @@
-import { getDate, getTime } from "./utils/date";
 import { google } from "googleapis";
 import path from "path";
 
@@ -12,24 +11,34 @@ const sheets = google.sheets({ version: "v4", auth });
 const spreadsheetId = "1z3PeNF-dRhMFvBjIiMPDqQBxPmV3ufqDpZE0s1jDw4I"; // ID вашей Google Таблицы
 
 export async function writeToGoogleSheet(data: string[], range: string) {
-    let date = "unknown";
-    let time = "unknown";
-    try {
-        date = getDate();
-        time = getTime();
-    } catch (error) {
-       console.log(`[${new Date()}] | `+"ВРЕМЯ:", error);
-    }
+    // Маппинг данных в соответствии с полями Google Таблицы:
+    // МП, Статья МП, Пункт МП, Месяц, ЖК, номер документа основания, 
+    // ссылка на документ основания, номер счета, дата счета, сумма счета, 
+    // наименование подрядчика, Отправитель
+    const mappedData = [
+        data[0] || "",          // МП (план)
+        data[1] || "",          // Статья МП
+        data[2] || "",          // Пункт МП
+        data[3] || "",          // Месяц
+        data[4] || "",          // ЖК
+        data[5] || "",          // номер документа основания
+        data[6] || "",          // ссылка на документ основания
+        data[7] || "",          // номер счета
+        data[8] || "",          // дата счета
+        data[9] || "",          // сумма счета
+        data[10] || "",         // наименование подрядчика
+        data[11] || ""          // Отправитель
+    ];
 
     try {
-       console.log(`[${new Date()}] | `+"Отправляем запрос:", data, range);
+       console.log(`[${new Date()}] | `+"Отправляем запрос:", mappedData, range);
         const response = await sheets.spreadsheets.values.append({
             spreadsheetId,
             range,
             valueInputOption: "RAW",
             insertDataOption: "INSERT_ROWS", // Явно указываем вставку новых строк
             requestBody: {
-                values: [[date, time, ...data]],
+                values: [mappedData],
             },
         });
        console.log(`[${new Date()}] | `+"Получили ответ:", response);
