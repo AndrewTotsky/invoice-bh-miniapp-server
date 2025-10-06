@@ -241,7 +241,7 @@ export default function PaymentForm({ user }: { user: User | null }): React.JSX.
                     form.values.counterparty,                         // наименование подрядчика
                     `${user?.first_name} ${user?.last_name}`          // Отправитель
                 ],
-                channelId: "-1002988617200",
+                channelId: "-1002198926389_10",
                 file: form.values.attachedFile
             });
 
