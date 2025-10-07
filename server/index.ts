@@ -69,12 +69,25 @@ function validateBotToken(): { isValid: boolean; error?: string } {
   return { isValid: true };
 }
 
+// Helpers
+function parseChatAndThreadId(rawChannelId: string): { chatId: string; threadId?: number } {
+  // Поддерживаем формат "-1001234567890_38" (chatId_THREADID)
+  const match = rawChannelId.match(/^(-?\d+)(?:_(\d+))?$/);
+  if (!match) {
+    return { chatId: rawChannelId };
+  }
+  const chatId = match[1];
+  const threadId = match[2] ? Number(match[2]) : undefined;
+  return { chatId, threadId };
+}
+
 // Telegram API service functions
 async function sendFileToTelegram(
   botToken: string, 
   channelId: string, 
   message: string, 
-  file: Express.Multer.File
+  file: Express.Multer.File,
+  messageThreadId?: number
 ): Promise<globalThis.Response> {
   console.log('Sending file to Telegram:', {
     filename: file.originalname,
@@ -88,6 +101,9 @@ async function sendFileToTelegram(
   console.log('Fixed filename:', fixedFileName);
   
   formData.append('chat_id', channelId);
+  if (typeof messageThreadId === 'number') {
+    formData.append('message_thread_id', String(messageThreadId));
+  }
   formData.append('caption', message);
   formData.append('parse_mode', 'HTML');
   formData.append('document', new Blob([file.buffer], { type: file.mimetype }), fixedFileName);
@@ -109,8 +125,18 @@ async function sendFileToTelegram(
 async function sendTextToTelegram(
   botToken: string, 
   channelId: string, 
-  message: string
+  message: string,
+  messageThreadId?: number
 ): Promise<globalThis.Response> {
+  const payload: Record<string, unknown> = {
+    chat_id: channelId,
+    text: message,
+    parse_mode: 'HTML'
+  };
+  if (typeof messageThreadId === 'number') {
+    payload.message_thread_id = messageThreadId;
+  }
+
   return await fetch(
     `https://api.telegram.org/bot${botToken}/sendMessage`,
     {
@@ -118,11 +144,7 @@ async function sendTextToTelegram(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        chat_id: channelId,
-        text: message,
-        parse_mode: 'HTML'
-      })
+      body: JSON.stringify(payload)
     }
   );
 }
@@ -152,6 +174,7 @@ app.post('/api/send-telegram', upload.single('file'), async (req: Request<{}, Te
   const { message, channelId } = req.body;
   const fieldsString = req.body.fields;
   const file = req.file;
+  const { chatId, threadId } = parseChatAndThreadId(channelId);
   
   // Парсим поля из JSON строки в массив
   let fields: string[] = [];
@@ -189,9 +212,9 @@ app.post('/api/send-telegram', upload.single('file'), async (req: Request<{}, Te
         let response;
 
         if (file) {
-            response = await sendFileToTelegram(botToken, channelId, message, file);
+            response = await sendFileToTelegram(botToken, chatId, message, file, threadId);
         } else {
-            response = await sendTextToTelegram(botToken, channelId, message);
+            response = await sendTextToTelegram(botToken, chatId, message, threadId);
         }
 
         const data = await processTelegramResponse(response);
